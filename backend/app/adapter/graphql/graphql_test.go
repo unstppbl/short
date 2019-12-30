@@ -1,11 +1,15 @@
+// +build !integration all
+
 package graphql
 
 import (
-	"short/app/adapter/recaptcha"
-	"short/app/entity"
+	"short/app/adapter/db"
 	"short/app/usecase/auth"
+	"short/app/usecase/keygen"
 	"short/app/usecase/requester"
+	"short/app/usecase/service"
 	"short/app/usecase/url"
+	"short/app/usecase/validator"
 	"testing"
 	"time"
 
@@ -13,16 +17,25 @@ import (
 )
 
 func TestGraphQlAPI(t *testing.T) {
-	db, _, err := mdtest.NewSQLStub()
+	sqlDB, _, err := mdtest.NewSQLStub()
 	mdtest.Equal(t, nil, err)
-	defer db.Close()
+	defer sqlDB.Close()
 
-	urls := map[string]entity.URL{}
-	retriever := url.NewRetrieverFake(urls)
-	var availableUrls []string
-	creator := url.NewCreatorFake(urls, availableUrls)
+	urlRepo := db.NewURLSql(sqlDB)
+	retriever := url.NewRetrieverPersist(urlRepo)
+	urlRelationRepo := db.NewUserURLRelationSQL(sqlDB)
+	keyGen := keygen.NewFake([]string{})
+	longLinkValidator := validator.NewLongLink()
+	customAliasValidator := validator.NewCustomAlias()
+	creator := url.NewCreatorPersist(
+		urlRepo,
+		urlRelationRepo,
+		&keyGen,
+		longLinkValidator,
+		customAliasValidator,
+	)
 
-	s := recaptcha.NewFake()
+	s := service.NewReCaptchaFake(service.VerifyResponse{})
 	verifier := requester.NewVerifier(s)
 	authenticator := auth.NewAuthenticatorFake(time.Now(), time.Hour)
 

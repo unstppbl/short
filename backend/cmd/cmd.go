@@ -8,15 +8,31 @@ import (
 	"github.com/byliuyang/app/fw"
 )
 
+// ServiceConfig represents necessary parameters needed to initialize the
+// backend APIs.
+type ServiceConfig struct {
+	RecaptchaSecret      string
+	GithubClientID       string
+	GithubClientSecret   string
+	FacebookClientID     string
+	FacebookClientSecret string
+	FacebookRedirectURI  string
+	GoogleClientID       string
+	GoogleClientSecret   string
+	GoogleRedirectURI    string
+	JwtSecret            string
+	WebFrontendURL       string
+	GraphQLAPIPort       int
+	HTTPAPIPort          int
+	KeyGenBufferSize     int
+	KgsHostname          string
+	KgsPort              int
+}
+
+// NewRootCmd creates the base command.
 func NewRootCmd(
 	dbConfig fw.DBConfig,
-	recaptchaSecret string,
-	githubClientID string,
-	githubClientSecret string,
-	jwtSecret string,
-	webFrontendURL string,
-	graphQLAPIPort int,
-	httpAPIPort int,
+	config ServiceConfig,
 	cmdFactory fw.CommandFactory,
 	dbConnector fw.DBConnector,
 	dbMigrationTool fw.DBMigrationTool,
@@ -28,16 +44,30 @@ func NewRootCmd(
 			Usage:        "start",
 			ShortHelpMsg: "Start service",
 			OnExecute: func(cmd *fw.Command, args []string) {
+
+				serviceConfig := app.ServiceConfig{
+					MigrationRoot:        migrationRoot,
+					RecaptchaSecret:      config.RecaptchaSecret,
+					GithubClientID:       config.GithubClientID,
+					GithubClientSecret:   config.GithubClientSecret,
+					FacebookClientID:     config.FacebookClientID,
+					FacebookClientSecret: config.FacebookClientSecret,
+					FacebookRedirectURI:  config.FacebookRedirectURI,
+					GoogleClientID:       config.GoogleClientID,
+					GoogleClientSecret:   config.GoogleClientSecret,
+					GoogleRedirectURI:    config.GoogleRedirectURI,
+					JwtSecret:            config.JwtSecret,
+					WebFrontendURL:       config.WebFrontendURL,
+					GraphQLAPIPort:       config.GraphQLAPIPort,
+					HTTPAPIPort:          config.HTTPAPIPort,
+					KeyGenBufferSize:     config.KeyGenBufferSize,
+					KgsHostname:          config.KgsHostname,
+					KgsPort:              config.KgsPort,
+				}
+
 				app.Start(
 					dbConfig,
-					migrationRoot,
-					recaptchaSecret,
-					githubClientID,
-					githubClientSecret,
-					jwtSecret,
-					webFrontendURL,
-					graphQLAPIPort,
-					httpAPIPort,
+					serviceConfig,
 					dbConnector,
 					dbMigrationTool,
 				)
@@ -60,6 +90,7 @@ func NewRootCmd(
 	return rootCmd
 }
 
+// Execute runs the root command.
 func Execute(rootCmd fw.Command) {
 	err := rootCmd.Execute()
 	if err != nil {

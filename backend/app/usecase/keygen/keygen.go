@@ -1,5 +1,8 @@
 package keygen
 
+import "github.com/byliuyang/kgs/app/entity"
+
+// KeyGenerator generates unique keys.
 type KeyGenerator interface {
-	NewKey() string
+	NewKey() (entity.Key, error)
 }

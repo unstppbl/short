@@ -1,10 +1,11 @@
+import { IErr } from '../entity/Err';
 
-import {IErr} from '../entity/Err';
-
-export enum ErrUrl {
+export enum Err {
   AliasAlreadyExist = 'aliasAlreadyExist',
   UserNotHuman = 'requesterNotHuman',
-  Unauthorized = 'invalidAuthToken'
+  Unauthorized = 'invalidAuthToken',
+  NetworkError = 'networkError',
+  Unknown = 'unknownError'
 }
 
 const unknownErr = {
@@ -19,9 +20,8 @@ const unknownErr = {
 const aliasNotAvailableErr = {
   name: 'Alias not available',
   description: `
-                The alias you choose is not available, please choose a 
-                different one. Leaving custom alias field empty will automatically 
-                generate a available alias.
+                The alias you choose is not available. Please choose a different 
+                alias, or leave alias field empty to automatically generate one.
                 `
 };
 
@@ -34,13 +34,24 @@ const userNotHumanErr = {
                 `
 };
 
+const networkErr = {
+  name: 'Network error',
+  description: `
+              Unable to reach the server. Please double check your Internet connection and try again.
+              If this happens consistently, please email byliuyang11@gmail.com with screenshots and the necessary steps to reproduce the error.
+              `
+};
+
 export class ErrorService {
-  getErr(errCode: ErrUrl): IErr {
+  getErr(errCode: Err): IErr {
     switch (errCode) {
-      case ErrUrl.AliasAlreadyExist:
+      case Err.AliasAlreadyExist:
         return aliasNotAvailableErr;
-      case ErrUrl.UserNotHuman:
+      case Err.UserNotHuman:
         return userNotHumanErr;
+      case Err.NetworkError:
+        return networkErr;
+      case Err.Unknown:
       default:
         return unknownErr;
     }

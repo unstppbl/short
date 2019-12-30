@@ -1,7 +1,13 @@
 import { IFeatureDecisionService } from './FeatureDecision.service';
 
 export class StaticConfigDecisionService implements IFeatureDecisionService {
-  includeGoogleSignButton(): boolean {
+  includeGithubSignButton(): boolean {
     return false;
+  }
+  includeGoogleSignButton(): boolean {
+    return true;
+  }
+  includeFacebookSignButton(): boolean {
+    return true;
   }
 }

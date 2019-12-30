@@ -5,6 +5,7 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/408644627586328ddd6c/maintainability)](https://codeclimate.com/github/byliuyang/short/maintainability)
 [![Go Report Card](https://goreportcard.com/badge/github.com/byliuyang/short)](https://goreportcard.com/report/github.com/byliuyang/short)
 [![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](https://github.com/byliuyang/short)
+[![Floobits Status](https://floobits.com/byliuyang/short.svg)](https://floobits.com/byliuyang/short/redirect)
 
 ![Demo](promo/marquee.png)
 
@@ -17,6 +18,50 @@
 Install it from [Chrome Web Store](https://short-d.com/r/ext) or build it
 from [source](https://short-d.com/r/ext-code)
 
+## Dependent Projects
+
+- [app](https://github.com/byliuyang/app): Reusable framework for Go apps & command
+   line tools.
+- [kgs](https://github.com/byliuyang/kgs): Offline unique key generation service.
+- [toggle](https://github.com/byliuyang/toggle): Dynamic system behavior controller.
+
+## Table of Contents
+
+1. [Getting Started](#getting-started)
+   1. [Accessing the source code](#accessing-the-source-code)
+   1. [Prerequisites](#prerequisites)
+   1. [Create reCAPTCHA account](#create-recaptcha-account)
+   1. [Create Github OAuth application](#create-github-oauth-application)
+   1. [Create Facebook Application](#create-facebook-application)
+   1. [Backend](#backend)
+   1. [Frontend](#frontend)
+1. [System Design](#system-design)
+   1. [App Level Architecture](#app-level-architecture)
+   1. [Service Level Archtecture](#service-level-archtecture)
+   1. [Object Oriented Design](#object-oriented-design)
+   1. [Dependency Injection](#dependency-injection)
+   1. [Database Modeling](#database-modeling)
+   1. [Feature Toggle](#feature-toggle)
+   1. [Search Engine Optimization](#search-engine-optimization)
+   1. [Social Media Summary Card](#social-media-summary-card)
+1. [Testing](#testing)
+   1. [The Importance Of Automation](#the-importance-of-automation)
+   1. [Testing Strategy](#testing-strategy)
+   1. [Unit Testing](#unit-testing)
+   1. [Integration Testing](#integration-testing)
+   1. [Component Testing](#component-testing)
+   1. [Contract Testing](#contract-testing)
+   1. [End To End Testing](#end-to-end-testing)
+   1. [The Test Pyramid](#the-test-pyramid)
+1. [Deployment](#deployment)
+   1. [Kubernetes](#kubernetes)
+   1. [Staging](#staging)
+   1. [Production](#production)
+1. [Tools We Use](#tools-we-use)
+1. [Contributing](#contributing)
+1. [Author](#author)
+1. [License](#license)
+
 ## Getting Started
 
 ### Accessing the source code
@@ -27,29 +72,10 @@ git clone https://github.com/byliuyang/short.git
 
 ### Prerequisites
 
-- Docker v19.03.2
-
-### Configure environmental variables
-
-1. Create `.env` file at project root with the following content:
-
-   ```env
-   DOCKERHUB_USERNAME=local
-   DB_USER=your_db_user
-   DB_PASSWORD=your_db_password
-   DB_NAME=your_db_name
-   RECAPTCHA_SECRET=your_recaptcha_secret
-   GITHUB_CLIENT_ID=your_Github_client_id
-   GITHUB_CLIENT_SECRET= your_Github_client_secret
-   JWT_SECRET= your_JWT_secret
-   WEB_FRONTEND_URL=http://localhost:3000
-   WEB_PORT=3000
-   HTTP_API_PORT=80
-   GRAPHQL_API_PORT=8080
-   ```
-   
-1. Update `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `JWT_SECRET` with your own
-   configurations.
+- Go v1.13.1
+- Node.js v12.12.0
+- Yarn v1.19.1
+- Postgresql v12.0 ( or use [ElephantSQL](https://short-d.com/r/sql) instead )
 
 ### Create reCAPTCHA account
 
@@ -62,16 +88,25 @@ git clone https://github.com/byliuyang/short.git
    | reCAPTCHA type  | `reCAPTCHAv3`  |
    | Domains         | `localhost`    |
 
-1. Replace the value of `RECAPTCHA_SECRET` in the `.env` file with `SECRET KEY`.
-1. Replace the value of `REACT_APP_RECAPTCHA_SITE_KEY` in
-   `frontend/.env.development` file with `SITE_KEY`.
+   ![Register Site](doc/recaptcha/register-site.jpg)
 
-### Create Github OAuth Application
+1. Open `settings`. Copy `SITE KEY` and `SECRET KEY`.
+
+   ![Settings](doc/recaptcha/settings.jpg)
+
+   ![Credentials](doc/recaptcha/credentials.jpg)
+
+1. Replace the value of `RECAPTCHA_SECRET` in the `backend/.env` file with
+   `SECRET KEY`.
+1. Replace the value of `REACT_APP_RECAPTCHA_SITE_KEY` in
+   `frontend/.env.development` file with `SITE KEY`.
+
+### Create Github OAuth application
 
 1. Create a new OAuth app at
    [Github Developers](https://short-d.com/r/ghdev) with the
    following configurations:
-   
+
    | Field                      | Value                                            |
    |----------------------------|--------------------------------------------------|
    | Application Name           | `Short`                                          |
@@ -79,63 +114,53 @@ git clone https://github.com/byliuyang/short.git
    | Application description    | `URL shortening service written in Go and React` |
    | Authorization callback URL | `http://localhost/oauth/github/sign-in/callback` |
 
-1. Replace the value of `GITHUB_CLIENT_ID` in the `.env` file with `Client ID`.
-1. Replace the value of `GITHUB_CLIENT_SECRET` in the `.env` file with
+   ![OAuth Apps](doc/github/oauth-apps.jpg)
+
+   ![New OAuth App](doc/github/new-oauth-app.jpg)
+
+1. Copy `Client ID` and `Client Secret`.
+
+   ![Credentials](doc/github/credentials.jpg)
+
+1. Replace the value of `GITHUB_CLIENT_ID` in the `backend/.env` file with
+   `Client ID`.
+1. Replace the value of `GITHUB_CLIENT_SECRET` in the `backend/.env` file with
    `Client Secret`.
 
-### Generate static assets
+### Create Facebook Application
 
-Run the following commands at project root:
+1. Create a new app at
+   [Facebook Developers](https://short-d.com/r/fbdev) with the following configurations:
 
-```bash
-docker build -t frontend-build -f Dockerfile-build .
-docker run -v $(pwd)/frontend/build:/app/build frontend-build:latest
-```
+   | Field         | Value        |
+   |---------------|--------------|
+   | Display Name  | `Short Test` |
+   | Contact Email | your_email   |
 
-### Build frontend & backend docker images
+1. Add `Facebook Login` to the app.
 
-```bash
-docker build -t short-frontend:latest -f frontend/Dockerfile frontend
-docker build -t short-backend:latest -f backend/Dockerfile backend
-```
+   ![Login](doc/facebook/login.jpg)
 
-### Launch App
+1. Copy `App ID` and `App Secret` on `Settings` > `Basic` tab.
 
-```bash
-docker-compose up
-```
+   ![Credentials](doc/facebook/credentials.jpg)
 
-Visit [http://localhost:3000](http://localhost:3000)
-
-## Development
-
-### Dependencies
-
-- Go v1.13.1
-- Node.js v12.12.0
-- Yarn v1.19.1
-- Postgresql v12.0 ( or use [ElephantSQL](https://short-d.com/r/sql) instead )
+1. Replace the value of `FACEBOOK_CLIENT_ID` in `backend/.env` file with `App ID`.
+1. Replace the value of `FACEBOOK_CLIENT_SECRET` in `backend/.env` file with
+   `App Secret`.
 
 ### Backend
 
-1. Create `.env` under `backend` directory with the following content:
+1. Copy `backend/.env.dist` file to `backend/.env`:
 
-   ```env
-   DB_HOST=your_db_host
-   DB_PORT=your_db_port
-   DB_USER=your_db_user
-   DB_PASSWORD=your_db_password
-   DB_NAME=your_db_name
-   RECAPTCHA_SECRET=your_recaptcha_secret
-   GITHUB_CLIENT_ID=your_Github_client_id
-   GITHUB_CLIENT_SECRET=your_Github_client_secret
-   JWT_SECRET=your_JWT_secret
-   WEB_FRONTEND_URL=http://localhost:3000
+   ```bash
+   cp backend/.env.dist backend/.env
    ```
-   
+
 1. Update `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`,
-   `RECAPTCHA_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `JWT_SECRET`
-   with your own configurations.
+   `RECAPTCHA_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `FACEBOOK_CLIENT_ID`,
+   `FACEBOOK_CLIENT_SECRET`, `FACEBOOK_REDIRECT_URI`, `JWT_SECRET`,
+    with your own configurations.
 
 1. Launch backend server
 
@@ -160,19 +185,419 @@ Remember to update `REACT_APP_RECAPTCHA_SITE_KEY` in `frontend/.env.development`
    cd frontend
    ./scripts/dev
    ```
-   
+
 1. Visit [http://localhost:3000](http://localhost:3000)
 
 ## System Design
 
+### App Level Architecture
+
+Short backend is built on top of
+[Uncle Bob's Clean Architecture](https://api.short-d.com/r/ca), the central
+objective of which is separation of concerns.
+
+![Clean Architecture](doc/eng/clean-architecture/clean-architecture.jpg)
+![Boundary](doc/eng/clean-architecture/boundary.jpg)
+
+It enables the developers to modify a single component of the system at a time
+while leaving the rest unchanged. This minizes the amount of changes have to
+be made in order to support new requirements as the system grows. Clean
+Architecture also improves the testability of system, which in turn saves
+precious time when creating automated tests.
+
+Here is an exmample of finance app using clean architecture:
+
+![Finance App](doc/eng/clean-architecture/finance-app.jpg)
+
+### Service Level Archtecture
+
+Short adopts [Microservices Architecture](https://api.short-d.com/r/ms) to
+organize dependent services around business capabilities and to enable
+independent deployment of each service.
+
+![Microservice Architecture](doc/eng/microservices.jpg)
+
+### Object Oriented Design
+
+Short leverages class design, package cohesion, and package coupling princiapls
+to manage logical dependency between internal components.
+
+#### Class Design
+
+| Principal                                                        | Description                                                            |
+|------------------------------------------------------------------|------------------------------------------------------------------------|
+| [Single Responsibility Principle](https://api.short-d.com/r/srp) | A class should have one, and only one, reason to change.               |
+| [Open Closed Principle](https://api.short-d.com/r/ocp)           | You should be able to extend a classes behavior, without modifying it. |
+| [Liskov Substitution Principle](https://api.short-d.com/r/lsp)   | Derived classes must be substitutable for their base classes.          |
+| [Interface Segregation Principle](https://api.short-d.com/r/isp) | Make fine grained interfaces that are client specific.                 |
+| [Dependency Inversion Principle](https://api.short-d.com/r/dip)  | Depend on abstractions, not on concretions.                            |
+
+#### Package Cohesion
+
+| Principal                                                            | Description                                           |
+|----------------------------------------------------------------------|-------------------------------------------------------|
+| [Release Reuse Equivalency Principle](https://api.short-d.com/r/rep) | The granule of reuse is the granule of release.       |
+| [The Common Closure Principle](https://api.short-d.com/r/ccp)        | Classes that change together are packaged together.   |
+| [The Common Reuse Principle](https://api.short-d.com/r/crp)          | Classes that are used together are packaged together. |
+
+#### Package Coupling
+
+| Principal                                                       | Description                                           |
+|-----------------------------------------------------------------|-------------------------------------------------------|
+| [Acyclic Dependencies Principle](https://api.short-d.com/r/adp) | The dependency graph of packages must have no cycles. |
+| [Stable Dependencies Principle](https://api.short-d.com/r/sdp)  | Depend in the direction of stability.                 |
+| [Stable Abstractions Principle](https://api.short-d.com/r/sap)  | Abstractness increases with stability.                |
+
+### Dependency Injection
+
+Short produces flexible and loosely coupled code, by explicitly providing
+components with all of the dependencies they need.
+
+```go
+type Authenticator struct {
+  tokenizer          fw.CryptoTokenizer
+  timer              fw.Timer
+  tokenValidDuration time.Duration
+}
+
+func NewAuthenticator(
+  tokenizer fw.CryptoTokenizer,
+  timer fw.Timer,
+  tokenValidDuration time.Duration,
+) Authenticator {
+  return Authenticator{
+    tokenizer:          tokenizer,
+    timer:              timer,
+    tokenValidDuration: tokenValidDuration,
+  }
+}
+```
+
+Short also simplifies the management of the big block of order-dependent
+initialization code with [Wire](https://api.short-d.com/r/wire), a compile time
+depedency injection framework by Google.
+
+```go
+func InjectGraphQlService(
+  name string,
+  sqlDB *sql.DB,
+  graphqlPath provider.GraphQlPath,
+  secret provider.ReCaptchaSecret,
+  jwtSecret provider.JwtSecret,
+  bufferSize provider.KeyGenBufferSize,
+  kgsRPCConfig provider.KgsRPCConfig,
+) (mdservice.Service, error) {
+  wire.Build(
+    wire.Bind(new(fw.GraphQlAPI), new(graphql.Short)),
+    wire.Bind(new(url.Retriever), new(url.RetrieverPersist)),
+    wire.Bind(new(url.Creator), new(url.CreatorPersist)),
+    wire.Bind(new(repo.UserURLRelation), new(db.UserURLRelationSQL)),
+    wire.Bind(new(repo.URL), new(*db.URLSql)),
+    wire.Bind(new(keygen.KeyGenerator), new(keygen.Remote)),
+    wire.Bind(new(service.KeyFetcher), new(kgs.RPC)),
+
+    observabilitySet,
+    authSet,
+
+    mdservice.New,
+    provider.NewGraphGophers,
+    mdhttp.NewClient,
+    mdrequest.NewHTTP,
+    mdtimer.NewTimer,
+
+    db.NewURLSql,
+    db.NewUserURLRelationSQL,
+    provider.NewRemote,
+    url.NewRetrieverPersist,
+    url.NewCreatorPersist,
+    provider.NewKgsRPC,
+    provider.NewReCaptchaService,
+    requester.NewVerifier,
+    graphql.NewShort,
+  )
+  return mdservice.Service{}, nil
+}
+```
+
 ### Database Modeling
 
-![Entity Relation Diagram](doc/eng/db/er-v1.png)
+![Entity Relation Diagram](doc/eng/db/er-v1.jpg)
+
+### Feature Toggle
+
+Short employs `feature toggles` to modify system behavior without changing code.
+UI components controlled by the feature toggles are created inside a centralized
+`UIFactory` in order to avoid having nested `if` `else` statement across the
+code base:
+
+```typescript
+// UIFactory.tsx
+export class UIFactory {
+  constructor(
+    private featureDecisionService: IFeatureDecisionService
+  ) {}
+
+  public createGoogleSignInButton(): ReactElement {
+    if (!this.featureDecisionService.includeGoogleSignButton()) {
+      return <div />;
+    }
+    return (
+      <GoogleSignInButton
+        googleSignInLink={this.authService.googleSignInLink()}
+      />
+    );
+  }
+
+  public createGithubSignInButton(): ReactElement {
+    if (!this.featureDecisionService.includeGithubSignButton()) {
+      return <div />;
+    }
+    return (
+      <GithubSignInButton
+        githubSignInLink={this.authService.githubSignInLink()}
+      />
+    );
+  }
+}
+```
+
+Short also provides `IFeatureDecisionService` interface, allowing the developers
+to switch to dynamic feature toggle backend in the future by simply swapping
+the dependency injected.
+
+```typescript
+// FeatureDecision.service.ts
+export interface IFeatureDecisionService {
+  includeGithubSignButton(): boolean;
+  includeGoogleSignButton(): boolean;
+  includeFacebookSignButton(): boolean;
+}
+```
+
+```typescript
+// StaticConfigDecision.service.ts
+import { IFeatureDecisionService } from './FeatureDecision.service';
+
+export class StaticConfigDecisionService implements IFeatureDecisionService {
+  includeGithubSignButton(): boolean {
+    return false;
+  }
+  includeGoogleSignButton(): boolean {
+    return false;
+  }
+  includeFacebookSignButton(): boolean {
+    return true;
+  }
+}
+```
+
+```typescript
+// dep.ts
+export function initUIFactory(
+  ...
+): UIFactory {
+  ...
+  const staticConfigDecision = new StaticConfigDecisionService();
+  ...
+  return new UIFactory(
+    ...,
+    staticConfigDecision
+  );
+}
+```
+
+You can read about the detailed feature toggle design on
+[this article](https://martinfowler.com/articles/feature-toggles.html).
+
+### Search Engine Optimization
+
+In order to improve the quality and quantity of the website's traffic, Short
+increases its visibility to web search engines through HTML meta tags.
+
+```html
+<!-- ./frontend/public/index.html -->
+<title>Short: Free online link shortening service</title>
+
+<!-- Search Engine Optimization -->
+<meta name="description"
+      content="Short enables people to type less for their favorite web sites">
+<meta name="robots" content="index, follow">
+<link href="https://short-d.com" rel="canonical">
+```
+
+If you search `short-d.com` on Google, you should see Short shows up as
+the first result:
+
+![Google Search Result](doc/seo/google.jpg)
+
+### Social Media Summary Card
+
+#### Facebook & LinkedIn
+
+Short leverages `Open Graph` tags to control what content shows up in
+the summary card when the website is shared on Facebook or LinkedIn:
+
+```html
+<!-- ./frontend/public/index.html -->
+<!-- Open Graph -->
+<meta property="og:title" content="Short: Free link shortening service"/>
+<meta property="og:description"
+      content="Short enables people to type less for their favorite web sites"/>
+<meta property="og:image"
+      content="https://short-d.com/promo/small-tile.png"/>
+<meta property="og:url" content="https://short-d.com"/>
+<meta property="og:type" content="website"/>
+```
+
+Shared on Facebook:
+
+![Facebook Card](doc/social-media-card/facebook.jpg)
+
+Shared on LinkedIn:
+
+![LinkedIn Card](doc/social-media-card/linkedin.jpg)
+
+#### Twitter
+
+Twitter uses its own meta tags to determine what will show up when
+the website is mentioned in a Tweet:
+
+```html
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@byliuyang11"/>
+<meta name="twitter:title" content="Short: Free link shortening service"/>
+<meta name="twitter:description"
+      content="Short enables people to type less for their favorite web sites"/>
+<meta name="twitter:image" content="https://short-d.com/promo/twitter-card.png"/>
+```
+
+![Twitter Card](doc/social-media-card/twitter.jpg)
+
+## Testing
+
+### The Importance Of Automation
+
+Short is maintained by a small team of talented software engineers working
+at Google, Uber, and Vmware as a side project. The team wants to deliver new
+features faster without sacrificing its quality. Testing ever-increasing
+amount of features manually soon becomes impossible — unless we want
+to spend all our time with manual, repetitive work instead of delivering
+working features.
+
+Test automation is the only way forward.
+
+### Testing Strategy
+
+![Test Strategy](doc/testing/test-strategy.png)
+
+Please read [Testing Strategies in a Microservice Architecture](https://martinfowler.com/articles/microservice-testing)
+for a detailed introduction on test strategies.
+
+### Unit Testing
+
+A unit test exercises the smallest piece of testable software in the
+application to determine whether it behaves as expected.
+
+![Unit Test](doc/testing/unit-test.png)
+
+Run unit tests for backend:
+
+```bash
+cd backend
+./scripts/unit-test
+```
+
+#### Sociable And Solitary
+
+![Two Types of Unit Test](doc/testing/unit-test-two-types.png)
+
+#### The FIRST Principal
+
+- [F]ast: Unit tests should be fast otherwise they will slow down
+   development & deployment.
+- [I]ndependent: Never ever write tests which depend on other test cases.
+- [R]epeatable: A repeatable test is one that produces the same results
+   each time you run it.
+- [S]elf-validating: There must be no manual interpretation of the results.
+- [T]imely/[T]horoughly: Unit tests must be included for every pull request
+   of a new feature and cover edge cases, errors, and bad inputs.
+
+#### Test Structure
+
+A automated test method should be composed of 3As: Arrange, Act, and Assert.
+
+- [A]rrange: All the data needed for a test should be arranged as part
+  of the test. The data used in a test should not depend on the environment
+  in which the test is running.
+- [A]ct: Invoke the actual method under test.
+- [A]ssert: A test method should test for a single logical outcome.
+
+### Integration Testing
+
+An integration test verifies the communication paths and interactions
+between components to detect interface defects.
+
+![Integration Test](doc/testing/integration-test.png)
+
+Run integration tests for backend:
+
+```bash
+cd backend
+./scripts/integration-test
+```
+
+### Component Testing
+
+A component test limits the scope of the exercised software to a portion
+of the system under test, manipulating the system through internal code
+interfaces and using test doubles to isolate the code under test from
+other components.
+
+#### In Process
+
+![Component Test](doc/testing/component-test-in-process.png)
+
+#### Out Of Process
+
+![Component Test](doc/testing/component-test-out-of-process.png)
+
+### Contract Testing
+
+An integration contract test is a test at the boundary of an external
+service verifying that it meets the contract expected by a consuming
+service.
+
+### End To End Testing
+
+An end-to-end test verifies that a system meets external requirements
+and achieves its goals, testing the entire system, from end to end.
+
+### The Test Pyramid
+
+![Test Pyramid](doc/testing/test-pyramid.png)
 
 ## Deployment
 
-Merging from `master` branch to `production` branch on Github will automatically
-deploy the latest code to the production server. This is called continuous
+### Kubernetes
+
+Short leverages [Kubernetes](https://kubernetes.io) to automate deployment, scaling,
+and management of containerized microservices.
+
+![Node overview](https://d33wubrfki0l68.cloudfront.net/5cb72d407cbe2755e581b6de757e0d81760d5b86/a9df9/docs/tutorials/kubernetes-basics/public/images/module_03_nodes.svg)
+
+Short uses [GitOps](https://github.com/byliuyang/gitops) to manage Kubernetes cluster.
+![GitOps](https://images.contentstack.io/v3/assets/blt300387d93dabf50e/blt15812c9fe056ba3b/5ce4448f32fd88a3767ee9a3/download)
+
+### Staging
+
+Merging pull request into master branch on Github will automatically deploy the
+changes to [staging](https://staging.short-d.com) environment.
+
+### Production
+
+Merging from `master` branch to `production` branch will automatically
+deploy the latest code to the production. This is called continuous
 delivery in the DevOps world.
 
 ![Continuous Delivery](doc/eng/devops/continuous-delivery.png)
@@ -192,39 +617,21 @@ continuous deployment instead.
 
 ## Contributing
 
-When contributing to this repository, please first discuss the change you wish
-to make via [Slack channel](https://short-d.com/r/slack) with the owner
-of this repository before making a change.
-
-Please open a draft pull request when you are working on an issue so that the
-owner knows it is in progress. The owner may take over or reassign the issue if no
-body replies after ten days assigned to you.
-
-### Pull Request Process
-
-1. Update the README.md with details of changes to the interface, this includes
-   new environment variables, exposed ports, useful file locations and container
-   parameters.
-1. You may merge the Pull Request in once you have the sign-off of code owner,
-   or if you do not have permission to do that, you may request the code owner
-   to merge it for you.
-
-### Code of Conduct
-
-- Using welcoming and inclusive language
-- Being respectful of differing viewpoints and experiences
-- Gracefully accepting constructive criticism
-- Focusing on what is best for the community
-- Showing empathy towards other community members
-
-### Discussions
-
-Please join this [Slack channel](https://short-d.com/r/slack) to
-discuss bugs, dev environment setup, tooling, and coding best practices.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code
+of conduct, the process for submitting pull requests to us, and our code
+review guideline.
 
 ## Author
 
-Harry Liu - *Initial work* - [byliuyang](https://github.com/byliuyang)
+Harry Liu - *Initial work* - [byliuyang](https://short-d.com/r/ghharry)
+
+As the tech lead of Short, I am responsible for the overall planning, execution
+and success of complex software solutions to meet users' needs.
+
+I deeply believe in and am striving to achieve the right column of the
+following diagram:
+
+![Manager vs Leader](doc/leader-vs-manager.jpg)
 
 ## License
 

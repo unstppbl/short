@@ -1,11 +1,12 @@
 package provider
 
 import (
+	"short/app/adapter/facebook"
 	"short/app/adapter/github"
-	"short/app/adapter/oauth"
+	"short/app/adapter/google"
 	"short/app/adapter/routing"
+	"short/app/usecase/account"
 	"short/app/usecase/auth"
-	"short/app/usecase/service"
 	"short/app/usecase/url"
 
 	"github.com/byliuyang/app/fw"
@@ -14,27 +15,33 @@ import (
 // WebFrontendURL represents the URL of the web frontend
 type WebFrontendURL string
 
-// ShortRoutes creates HTTP routes for Short API with WwwRoot to uniquely identify WwwRoot during dependency injection.
-func ShortRoutes(
+// NewShortRoutes creates HTTP routes for Short API with WwwRoot to uniquely identify WwwRoot during dependency injection.
+func NewShortRoutes(
 	logger fw.Logger,
 	tracer fw.Tracer,
 	webFrontendURL WebFrontendURL,
 	timer fw.Timer,
 	urlRetriever url.Retriever,
-	githubOAuth oauth.Github,
 	githubAPI github.API,
+	facebookAPI facebook.API,
+	googleAPI google.API,
 	authenticator auth.Authenticator,
-	accountService service.Account,
+	accountProvider account.Provider,
 ) []fw.Route {
+	observability := routing.Observability{
+		Logger: logger,
+		Tracer: tracer,
+	}
+
 	return routing.NewShort(
-		logger,
-		tracer,
+		observability,
 		string(webFrontendURL),
 		timer,
 		urlRetriever,
-		githubOAuth,
 		githubAPI,
+		facebookAPI,
+		googleAPI,
 		authenticator,
-		accountService,
+		accountProvider,
 	)
 }
